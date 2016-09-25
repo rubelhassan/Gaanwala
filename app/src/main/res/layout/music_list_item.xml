@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="horizontal"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:paddingEnd="16dp"
+    android:paddingLeft="16dp"
+    android:paddingRight="16dp"
+    android:paddingStart="16dp">
+
+    <ImageView
+        android:id="@+id/image_view_music"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:src="@drawable/music_circle"
+        android:layout_gravity="center_vertical"
+        android:tint="@android:color/holo_blue_dark"/>
+
+    <LinearLayout
+        android:layout_weight="1"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/text_view_music_title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingLeft="@dimen/music_title_pad"
+            android:paddingTop="@dimen/music_title_pad"
+            android:paddingBottom="4dp"
+            android:text="@string/music_title"
+            android:textSize="16sp"
+            android:maxLines="1"
+            android:ellipsize="end"/>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:paddingLeft="8dp"
+            android:paddingBottom="@dimen/music_title_pad">
+
+            <TextView
+                android:id="@+id/text_view_music_artist"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/music_desc"
+                android:maxLines="1"
+                android:ellipsize="end"
+                android:textSize="12sp"/>
+            <View
+                android:layout_width="5dp"
+                android:layout_height="5dp"
+                android:layout_margin="4dp"
+                android:layout_gravity="center_vertical"
+                android:background="@color/colorPrimaryDark"/>
+            <TextView
+                android:id="@+id/text_view_music_length"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/music_length"
+                android:maxLines="1"
+                android:ellipsize="end"
+                android:textSize="12sp" />
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+    <ImageView
+        android:id="@+id/image_view_music_play"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:src="@drawable/play"
+        android:layout_gravity="center_vertical"
+        android:tint="@android:color/holo_blue_dark"/>
+
+</LinearLayout>

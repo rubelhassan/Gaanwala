@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">Gaanwala - A Music Player</string>
+    <string name="music_title">Music Title</string>
+    <string name="music_desc">Dummy Artist</string>
+    <string name="music_length">5:55s</string>
+    <string name="title_activity_music">MusicActivity</string>
+</resources>

@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/content_music"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    app:layout_behavior="@string/appbar_scrolling_view_behavior"
+    tools:context="com.example.rubel.gaanwala.MusicActivity"
+    tools:showIn="@layout/activity_music">
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentTop="true"
+        android:gravity="center"
+        android:background="#1A237E"
+        android:id="@+id/text_view_music_activity_title"
+        android:text="Title"
+        android:textSize="16sp"
+        android:textStyle="bold"
+        android:textColor="@android:color/white"/>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:layout_alignParentBottom="true"
+        android:id="@+id/linear_controllers"
+        android:background="#283593">
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="3" />
+
+        <ImageButton
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:src="@drawable/skip_previous_circle_outline"
+            android:id="@+id/btn_music_activity_prev"
+            android:tint="@android:color/white"
+            android:background="@null"
+            android:layout_weight="1"/>
+
+        <ImageButton
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:src="@drawable/pause_circle_outline"
+            android:id="@+id/btn_music_activity_play"
+            android:layout_weight="1"
+            android:background="@null"
+            android:tint="@android:color/white"/>
+
+        <ImageButton
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:background="@null"
+            android:src="@drawable/skip_next_circle_outline"
+            android:id="@+id/btn_music_activity_next"
+            android:tint="@android:color/white"
+            android:layout_weight="1"/>
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="3" />
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/linearSeekbar"
+        android:layout_above="@id/linear_controllers"
+        android:layout_marginLeft="8dp"
+        android:layout_marginRight="8dp"
+        android:orientation="horizontal">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/text_view_music_activity_current_time"
+            android:layout_gravity="center"
+            android:text="0:00"/>
+
+        <SeekBar
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:layout_marginBottom="8dp"
+            android:layout_weight="1"
+            android:id="@+id/seek_bar_music_activity" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/text_view_music_activity_duration"
+            android:layout_gravity="center"
+            android:text="0:00"/>
+
+    </LinearLayout>
+
+
+    <ImageView
+        android:id="@+id/image_view_music_activity_music_background"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/text_view_music_activity_title"
+        android:layout_above="@id/linearSeekbar"
+        android:scaleType="fitXY"
+        android:src="@drawable/music_background"/>
+
+</RelativeLayout>
