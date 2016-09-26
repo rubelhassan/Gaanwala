@@ -4,7 +4,7 @@ android {
     compileSdkVersion 24
     buildToolsVersion "23.0.2"
     defaultConfig {
-        applicationId "com.example.rubel.audioplayer"
+        applicationId "com.example.rubel.gaanwala"
         minSdkVersion 17
         targetSdkVersion 24
         versionCode 1
