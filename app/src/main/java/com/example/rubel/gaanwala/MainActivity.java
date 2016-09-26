@@ -43,6 +43,7 @@ public class MainActivity extends AppCompatActivity implements
 
     Intent intent;
 
+    // track playing and position
     boolean mPlaying = false;
     int mPosition = -1;
 
@@ -64,6 +65,7 @@ public class MainActivity extends AppCompatActivity implements
         }
     };
 
+    
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);

@@ -24,7 +24,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-public class MusicActivity extends AppCompatActivity {
+public class MusicActivity extends AppCompatActivity implements
+    MusicChangeObserver{
 
     private static final String MUSIC_POSITION = "com.example.rubel.gaanwala.POSITION";
     private static final String MUSICS_DATA = "com.example.rubel.gaanwala.MUSICS";
@@ -68,6 +69,10 @@ public class MusicActivity extends AppCompatActivity {
             musicPlayerService = binder.getService();
             mBound = true;
             mPlaying = true;
+
+            if(musicPlayerService != null){
+                musicPlayerService.registerOnMusicChange(MusicActivity.this);
+            }
         }
 
         @Override
@@ -242,5 +247,12 @@ public class MusicActivity extends AppCompatActivity {
             unbindService(mConnection);
         }
 
+    }
+
+    @Override
+    public void notifyOnChangeMusic(Music newMusic) {
+        if(mBound){
+            initializeCurrentMusic(newMusic);
+        }
     }
 }

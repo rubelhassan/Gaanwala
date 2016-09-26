@@ -16,6 +16,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import static android.os.Build.VERSION_CODES.M;
+
 
 /**
  * Created by rubel on 9/22/2016.
@@ -28,12 +30,14 @@ public class MusicPlayerService extends Service implements
     private static final String MUSICS_DATA = "com.example.rubel.gaanwala.MUSICS";
     private static final String MUSICS_CURRENT = "com.example.rubel.gaanwala.NOW";
 
-    private final  IBinder mBinder = new MusicPlayerBinder();
+    private final IBinder mBinder = new MusicPlayerBinder();
 
     MediaPlayer mediaPlayer = null;
     Uri currentUri;
     List<Music> musics;
     int currentPos;
+
+    List<MusicChangeObserver> musicChangeObservers = new ArrayList<>();
 
     public class MusicPlayerBinder extends Binder {
 
@@ -41,6 +45,7 @@ public class MusicPlayerService extends Service implements
             return MusicPlayerService.this;
         }
     }
+
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
@@ -66,6 +71,7 @@ public class MusicPlayerService extends Service implements
                     MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, Long.parseLong(music.getId()));
             try {
                 playSong(currentUri);
+                notifyAllMusicChangeObservers(music);
             } catch (IOException e) {
                 Toast.makeText(getApplicationContext(), "Music File Read Error", Toast.LENGTH_LONG).show();
                 e.printStackTrace();
@@ -127,6 +133,7 @@ public class MusicPlayerService extends Service implements
     public void onCreate() {
         super.onCreate();
         initializeMediaPlayer();
+        musicChangeObservers = new ArrayList<>();
     }
 
     public void playMusic(){
@@ -181,6 +188,22 @@ public class MusicPlayerService extends Service implements
     public void seekTo(int mills){
         if(mediaPlayer.isPlaying()){
             mediaPlayer.seekTo(mills);
+        }
+    }
+
+    public void registerOnMusicChange(MusicChangeObserver observer){
+        this.musicChangeObservers.add(observer);
+    }
+
+    public void unRegisterOnMusicChange(MusicChangeObserver observer){
+        if(musicChangeObservers.contains(observer)){
+            musicChangeObservers.remove(observer);
+        }
+    }
+
+    public void notifyAllMusicChangeObservers(Music newMusic){
+        for(MusicChangeObserver observer : musicChangeObservers){
+            observer.notifyOnChangeMusic(newMusic);
         }
     }
 }
