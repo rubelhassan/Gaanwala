@@ -255,4 +255,16 @@ public class MusicActivity extends AppCompatActivity implements
             initializeCurrentMusic(newMusic);
         }
     }
+
+    @Override
+    public void notifyOnPauseMusic() {
+        mPlaying = false;
+        mBtnPlay.setImageDrawable(ResourcesCompat.getDrawable(getResources(), R.drawable.play_circle_outline, null));
+    }
+
+    @Override
+    public void notifyOnPlayMusic() {
+        mPlaying = true;
+        mBtnPlay.setImageDrawable(ResourcesCompat.getDrawable(getResources(), R.drawable.pause_circle_outline, null));
+    }
 }

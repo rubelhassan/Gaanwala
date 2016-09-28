@@ -26,10 +26,10 @@ public class MainActivity extends AppCompatActivity implements
 
     private static final int MUSIC_LOADER_ID = 1;
     private static final String MUSICS_DATA = "com.example.rubel.gaanwala.MUSICS";
-    private static final String MUSICS_CURRENT = "com.example.rubel.gaanwala.NOW";
+    private static final String MUSICS_CURRENT = "com.example.rubel.gaanwala.CURRENT_MUSIC";
     private static final String MUSIC_POSITION = "com.example.rubel.gaanwala.POSITION";
 
-    ListView listViewMusic;
+    ListView mListViewMusic;
 
     List<Music> musicsList;
 
@@ -37,9 +37,9 @@ public class MainActivity extends AppCompatActivity implements
 
     TextView mEmptyStateTextView;
 
-    ProgressBar progressLoading;
+    ProgressBar mProgressLoading;
 
-    ImageView oldImageView = null;
+    ImageView mOldImageView = null;
 
     Intent intent;
 
@@ -71,36 +71,40 @@ public class MainActivity extends AppCompatActivity implements
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-
-        listViewMusic = (ListView) findViewById(R.id.list_view_music);
         mEmptyStateTextView = (TextView) findViewById(R.id.text_view_empty);
-        listViewMusic.setEmptyView(mEmptyStateTextView);
 
-        musicsList = new LinkedList<>();
-        musicListAdapter = new MusicListAdapter(this, R.layout.music_list_item, musicsList);
-        listViewMusic.setAdapter(musicListAdapter);
-        listViewMusic.setOnItemClickListener(this);
+        initializeListViewMusic();
 
-        progressLoading = (ProgressBar) findViewById(R.id.progressbar_loading_music);
+        mProgressLoading = (ProgressBar) findViewById(R.id.progressbar_loading_music);
 
         // TO DO
         // Add runtime permission for api >= 23 com.android.providers.media.MediaProvider
         LoaderManager loaderManager = getLoaderManager();
         loaderManager.initLoader(MUSIC_LOADER_ID, null, this);
-
     }
+
+    private void initializeListViewMusic() {
+        mListViewMusic = (ListView) findViewById(R.id.list_view_music);
+        mListViewMusic.setEmptyView(mEmptyStateTextView);
+        musicsList = new LinkedList<>();
+        musicListAdapter = new MusicListAdapter(this, R.layout.music_list_item, musicsList);
+        mListViewMusic.setAdapter(musicListAdapter);
+        mListViewMusic.setOnItemClickListener(this);
+    }
+
 
     @Override
     public Loader<List<Music>> onCreateLoader(int i, Bundle bundle) {
         return new MusicLoader(MainActivity.this);
     }
 
+
     @Override
     public void onLoadFinished(Loader<List<Music>> loader, List<Music> musics) {
 
         musicsList = musics;
 
-        progressLoading.setVisibility(View.GONE);
+        mProgressLoading.setVisibility(View.GONE);
         mEmptyStateTextView.setText("No Music found.");
 
         musicListAdapter.clear();
@@ -109,6 +113,7 @@ public class MainActivity extends AppCompatActivity implements
         }
 
     }
+
 
     @Override
     public void onLoaderReset(Loader<List<Music>> loader) {
@@ -127,11 +132,11 @@ public class MainActivity extends AppCompatActivity implements
 
         ImageView play = (ImageView) view.findViewById(R.id.image_view_music_play);
 
-        if(oldImageView != null && oldImageView != play){
-            if((int)oldImageView.getTag() == R.drawable.pause_circle){
+        if(mOldImageView != null && mOldImageView != play){
+            if((int)mOldImageView.getTag() == R.drawable.pause_circle){
 
-                oldImageView.setImageResource(R.drawable.play);
-                oldImageView.setTag(R.drawable.play);
+                mOldImageView.setImageResource(R.drawable.play);
+                mOldImageView.setTag(R.drawable.play);
 
             }
         }
@@ -164,13 +169,12 @@ public class MainActivity extends AppCompatActivity implements
 
         }
 
-        oldImageView = play;
+        mOldImageView = play;
 
         Intent musicIntent = new Intent(MainActivity.this, MusicActivity.class);
         musicIntent.putExtra(MUSIC_POSITION, position);
         musicIntent.putExtra(MUSICS_DATA, (Serializable) musicsList);
         startActivity(musicIntent);
-
     }
 
 

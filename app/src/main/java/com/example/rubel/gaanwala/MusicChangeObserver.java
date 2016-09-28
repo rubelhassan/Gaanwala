@@ -6,4 +6,6 @@ package com.example.rubel.gaanwala;
 
 public interface MusicChangeObserver {
     public void notifyOnChangeMusic(Music newMusic);
+    public void notifyOnPauseMusic();
+    public void notifyOnPlayMusic();
 }

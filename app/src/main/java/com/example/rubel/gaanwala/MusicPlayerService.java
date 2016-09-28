@@ -2,6 +2,7 @@ package com.example.rubel.gaanwala;
 
 import android.app.Service;
 import android.content.ContentUris;
+import android.content.Context;
 import android.content.Intent;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
@@ -24,11 +25,11 @@ import static android.os.Build.VERSION_CODES.M;
  */
 
 public class MusicPlayerService extends Service implements
-        MediaPlayer.OnPreparedListener, MediaPlayer.OnErrorListener,
+        MediaPlayer.OnPreparedListener, MediaPlayer.OnErrorListener, AudioManager.OnAudioFocusChangeListener,
         MediaPlayer.OnCompletionListener{
 
     private static final String MUSICS_DATA = "com.example.rubel.gaanwala.MUSICS";
-    private static final String MUSICS_CURRENT = "com.example.rubel.gaanwala.NOW";
+    private static final String MUSICS_CURRENT = "com.example.rubel.gaanwala.CURRENT_MUSIC";
 
     private final IBinder mBinder = new MusicPlayerBinder();
 
@@ -36,8 +37,13 @@ public class MusicPlayerService extends Service implements
     Uri currentUri;
     List<Music> musics;
     int currentPos;
+    int mLength = -1;
+
+    AudioManager mAudioManager;
 
     List<MusicChangeObserver> musicChangeObservers = new ArrayList<>();
+
+
 
     public class MusicPlayerBinder extends Binder {
 
@@ -97,13 +103,14 @@ public class MusicPlayerService extends Service implements
     @Nullable
     @Override
     public IBinder onBind(Intent intent) {
-
         return mBinder;
     }
 
     @Override
     public void onPrepared(MediaPlayer mediaPlayer) {
-        mediaPlayer.start();
+        if(getAudioFoucus())
+            mediaPlayer.start();
+
     }
 
     @Override
@@ -134,16 +141,21 @@ public class MusicPlayerService extends Service implements
         super.onCreate();
         initializeMediaPlayer();
         musicChangeObservers = new ArrayList<>();
+        mAudioManager = (AudioManager) getApplicationContext().getSystemService(Context.AUDIO_SERVICE);
     }
 
     public void playMusic(){
-        mediaPlayer.start();
+        if(getAudioFoucus())
+            mediaPlayer.start();
         Toast.makeText(getApplicationContext(), "Audio Played", Toast.LENGTH_SHORT).show();
     }
 
     public void pauseMusic(){
-        if(!mediaPlayer.isPlaying());
+        if(mediaPlayer.isPlaying()){
             mediaPlayer.pause();
+            mAudioManager.abandonAudioFocus(this);
+        }
+
         Toast.makeText(getApplicationContext(), "Audio Paused", Toast.LENGTH_SHORT).show();
     }
 
@@ -201,9 +213,78 @@ public class MusicPlayerService extends Service implements
         }
     }
 
-    public void notifyAllMusicChangeObservers(Music newMusic){
+    private void notifyAllMusicChangeObservers(Music newMusic){
         for(MusicChangeObserver observer : musicChangeObservers){
             observer.notifyOnChangeMusic(newMusic);
         }
+    }
+
+
+    private void notifyAllMusicChangeObserversOnPause(){
+        for(MusicChangeObserver observer : musicChangeObservers){
+            observer.notifyOnPauseMusic();
+        }
+    }
+
+    private void notifyAllMusicChangeObserversOnPlay(){
+        for(MusicChangeObserver observer : musicChangeObservers){
+            observer.notifyOnPlayMusic();
+        }
+    }
+
+    @Override
+    public void onAudioFocusChange(int focusChange) {
+        Toast.makeText(getApplicationContext(), "Another Audio focus change", Toast.LENGTH_LONG).show();
+
+        switch (focusChange){
+
+            case AudioManager.AUDIOFOCUS_GAIN:{
+                if(mLength > 0){
+                    mediaPlayer.seekTo(mLength);
+                    mediaPlayer.start();
+                    mLength = -1;
+                    notifyAllMusicChangeObserversOnPlay();
+                }
+
+                break;
+
+            }
+
+            case AudioManager.AUDIOFOCUS_LOSS:{
+                Toast.makeText(getApplicationContext(), "Another Audio in focus", Toast.LENGTH_LONG).show();
+                if(mediaPlayer.isPlaying()){
+                    mediaPlayer.pause();
+                    mLength = mediaPlayer.getCurrentPosition();
+                    notifyAllMusicChangeObserversOnPause();
+                }
+
+                break;
+            }
+
+            case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT:{
+                // temporary silence audio stream
+                if(mediaPlayer.isPlaying()){
+                    mediaPlayer.pause();
+                    mLength = mediaPlayer.getCurrentPosition();
+                    notifyAllMusicChangeObserversOnPause();
+                }
+                Toast.makeText(getApplicationContext(), "Transient Audio in focus", Toast.LENGTH_LONG).show();
+                break;
+            }
+
+            default:
+                break;
+        }
+    }
+
+    private boolean getAudioFoucus(){
+        int result = mAudioManager.requestAudioFocus(
+                this,
+                AudioManager.STREAM_MUSIC,
+                AudioManager.AUDIOFOCUS_GAIN);
+
+        if(result == AudioManager.AUDIOFOCUS_REQUEST_GRANTED)
+            return true;
+        return false;
     }
 }
