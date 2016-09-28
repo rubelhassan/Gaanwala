@@ -8,6 +8,9 @@ import android.content.ServiceConnection;
 import android.os.IBinder;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.widget.DefaultItemAnimator;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ImageView;
@@ -31,9 +34,11 @@ public class MainActivity extends AppCompatActivity implements
 
     ListView mListViewMusic;
 
+    RecyclerView mRecyclerViewMusic;
+
     List<Music> musicsList;
 
-    MusicListAdapter musicListAdapter;
+    MusicRecyclerAdapter mMusicRecyclerAdapter;
 
     TextView mEmptyStateTextView;
 
@@ -84,12 +89,17 @@ public class MainActivity extends AppCompatActivity implements
     }
 
     private void initializeListViewMusic() {
-        mListViewMusic = (ListView) findViewById(R.id.list_view_music);
-        mListViewMusic.setEmptyView(mEmptyStateTextView);
+        mRecyclerViewMusic = (RecyclerView) findViewById(R.id.recycler_view_main_activity_music);
+        // mRecyclerViewMusic.setEmptyView(mEmptyStateTextView);
         musicsList = new LinkedList<>();
-        musicListAdapter = new MusicListAdapter(this, R.layout.music_list_item, musicsList);
-        mListViewMusic.setAdapter(musicListAdapter);
-        mListViewMusic.setOnItemClickListener(this);
+
+        mMusicRecyclerAdapter = new MusicRecyclerAdapter(musicsList, getApplicationContext());
+
+        RecyclerView.LayoutManager layoutManager = new LinearLayoutManager(getApplicationContext());
+        mRecyclerViewMusic.setLayoutManager(layoutManager);
+        mRecyclerViewMusic.setItemAnimator(new DefaultItemAnimator());
+        mRecyclerViewMusic.setAdapter(mMusicRecyclerAdapter);
+        // mRecyclerViewMusic.setOnItemClickListener(this);
     }
 
 
@@ -107,9 +117,10 @@ public class MainActivity extends AppCompatActivity implements
         mProgressLoading.setVisibility(View.GONE);
         mEmptyStateTextView.setText("No Music found.");
 
-        musicListAdapter.clear();
+        mMusicRecyclerAdapter.clear();
         if(musicsList != null && !musicsList.isEmpty()){
-            musicListAdapter.addAll(musics);
+            mMusicRecyclerAdapter.addAll(musics);
+            mEmptyStateTextView.setVisibility(View.GONE);
         }
 
     }
@@ -117,7 +128,7 @@ public class MainActivity extends AppCompatActivity implements
 
     @Override
     public void onLoaderReset(Loader<List<Music>> loader) {
-        musicListAdapter.clear();
+        mMusicRecyclerAdapter.clear();
     }
 
 

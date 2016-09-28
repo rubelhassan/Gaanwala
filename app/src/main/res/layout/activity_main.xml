@@ -5,12 +5,18 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <ListView
+    <!--<ListView
         android:id="@+id/list_view_music"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:divider="@null"
-        android:dividerHeight="0dp"/>
+        android:dividerHeight="0dp"/>-->
+
+    <android.support.v7.widget.RecyclerView
+        android:id="@+id/recycler_view_main_activity_music"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:scrollbars="vertical" />
 
     <TextView
         android:id="@+id/text_view_empty"
