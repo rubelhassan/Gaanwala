@@ -24,6 +24,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.example.rubel.gaanwala.R.id.toolbar;
+
 public class MusicActivity extends AppCompatActivity implements
     MusicChangeObserver{
 
@@ -38,7 +40,6 @@ public class MusicActivity extends AppCompatActivity implements
     ImageButton mBtnPlay;
     ImageButton mBtnNext;
     ImageButton mBtnPrev;
-    TextView mTvMusicTitle;
     SeekBar mSeekbar;
     TextView mSeekbarStart;
     TextView mSeekbarMax;
@@ -46,6 +47,7 @@ public class MusicActivity extends AppCompatActivity implements
 
     Music mMusic;
 
+    Toolbar mToolbar;
 
 
     Handler mMusicHandler = new Handler();
@@ -86,9 +88,9 @@ public class MusicActivity extends AppCompatActivity implements
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_music);
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
-        toolbar.setTitle("Now Playing");
-        setSupportActionBar(toolbar);
+        mToolbar = (Toolbar) findViewById(toolbar);
+        mToolbar.setTitle("Now Playing");
+        setSupportActionBar(mToolbar);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
         Intent intent = getIntent();
@@ -103,7 +105,6 @@ public class MusicActivity extends AppCompatActivity implements
         }
 
 
-        mTvMusicTitle = (TextView) findViewById(R.id.text_view_music_activity_title);
         mBtnPlay = (ImageButton) findViewById(R.id.btn_music_activity_play);
         mBtnNext = (ImageButton) findViewById(R.id.btn_music_activity_next);
         mBtnPrev = (ImageButton) findViewById(R.id.btn_music_activity_prev);
@@ -120,7 +121,7 @@ public class MusicActivity extends AppCompatActivity implements
             intent = new Intent(MusicActivity.this, MusicPlayerService.class);
             bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
 
-            mTvMusicTitle.setText(mMusic.getTitle());
+            mToolbar.setSubtitle(mMusic.getTitle());
 
             initializeSeekbarWithValues();
 
@@ -213,7 +214,7 @@ public class MusicActivity extends AppCompatActivity implements
     private void initializeCurrentMusic(Music expectedMusic){
         if(expectedMusic != null){
             mMusic = expectedMusic;
-            mTvMusicTitle.setText(mMusic.getTitle());
+            mToolbar.setSubtitle(mMusic.getTitle());
             mBtnPlay.setImageDrawable(ResourcesCompat.getDrawable(getResources(), R.drawable.pause_circle_outline, null));
             mPlaying = true;
 

@@ -65,7 +65,7 @@ public class MusicPlayerService extends Service implements
         musics = (List<Music>) intent.getSerializableExtra(MUSICS_DATA);
         currentPos = intent.getIntExtra(MUSICS_CURRENT, 0);
 
-        playOnwards();
+        // playOnwards();
 
         return START_STICKY;
     }
@@ -286,5 +286,12 @@ public class MusicPlayerService extends Service implements
         if(result == AudioManager.AUDIOFOCUS_REQUEST_GRANTED)
             return true;
         return false;
+    }
+
+    public void playMusicAtPosition(int position){
+        currentPos = position;
+        if(mediaPlayer != null)
+            mediaPlayer.reset();
+        playOnwards();
     }
 }

@@ -1,7 +1,10 @@
 package com.example.rubel.gaanwala;
 
+import android.app.FragmentManager;
+import android.app.FragmentTransaction;
 import android.app.LoaderManager;
 import android.content.ComponentName;
+import android.content.Context;
 import android.content.Intent;
 import android.content.Loader;
 import android.content.ServiceConnection;
@@ -12,12 +15,10 @@ import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.View;
-import android.widget.AdapterView;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import java.io.Serializable;
 import java.util.LinkedList;
@@ -25,7 +26,8 @@ import java.util.List;
 
 
 public class MainActivity extends AppCompatActivity implements
-        LoaderManager.LoaderCallbacks<List<Music>>, ListView.OnItemClickListener{
+        LoaderManager.LoaderCallbacks<List<Music>>, MusicRecyclerAdapter.OnItemClickListener,
+        MusicFragment.OnClickFragmentMusic, MusicChangeObserver{
 
     private static final int MUSIC_LOADER_ID = 1;
     private static final String MUSICS_DATA = "com.example.rubel.gaanwala.MUSICS";
@@ -46,21 +48,23 @@ public class MainActivity extends AppCompatActivity implements
 
     ImageView mOldImageView = null;
 
-    Intent intent;
+    Intent mStartServiceIntent;
+    Intent mBindServiceIntent;
 
     // track playing and position
     boolean mPlaying = false;
     int mPosition = -1;
+    int fragmentPosition = 0;
 
     // Related to bound service
-    MusicPlayerService musicPlayerService;
+    MusicPlayerService mMusicPlayerService;
     boolean mBound = false;
 
     private ServiceConnection mConnection = new ServiceConnection() {
         @Override
         public void onServiceConnected(ComponentName componentName, IBinder service) {
             MusicPlayerService.MusicPlayerBinder binder = (MusicPlayerService.MusicPlayerBinder) service;
-            musicPlayerService = binder.getService();
+            mMusicPlayerService = binder.getService();
             mBound = true;
         }
 
@@ -94,12 +98,12 @@ public class MainActivity extends AppCompatActivity implements
         musicsList = new LinkedList<>();
 
         mMusicRecyclerAdapter = new MusicRecyclerAdapter(musicsList, getApplicationContext());
+        mMusicRecyclerAdapter.setOnItemClickListener(this);
 
-        RecyclerView.LayoutManager layoutManager = new LinearLayoutManager(getApplicationContext());
+        RecyclerView.LayoutManager layoutManager = new LinearLayoutManager(this);
         mRecyclerViewMusic.setLayoutManager(layoutManager);
         mRecyclerViewMusic.setItemAnimator(new DefaultItemAnimator());
         mRecyclerViewMusic.setAdapter(mMusicRecyclerAdapter);
-        // mRecyclerViewMusic.setOnItemClickListener(this);
     }
 
 
@@ -112,15 +116,28 @@ public class MainActivity extends AppCompatActivity implements
     @Override
     public void onLoadFinished(Loader<List<Music>> loader, List<Music> musics) {
 
-        musicsList = musics;
+        musicsList.clear();
+        musicsList.addAll(musics);
 
         mProgressLoading.setVisibility(View.GONE);
         mEmptyStateTextView.setText("No Music found.");
 
-        mMusicRecyclerAdapter.clear();
+        // mMusicRecyclerAdapter.clear();
         if(musicsList != null && !musicsList.isEmpty()){
-            mMusicRecyclerAdapter.addAll(musics);
+            mPosition = 0;
+            //mMusicRecyclerAdapter.addAll(musics);
             mEmptyStateTextView.setVisibility(View.GONE);
+            mMusicRecyclerAdapter.notifyDataSetChanged();
+            initializeFragmentOnDataLoad();
+
+            mStartServiceIntent = new Intent(MainActivity.this, MusicPlayerService.class);
+            mStartServiceIntent.putExtra(MUSICS_DATA, (Serializable) musicsList);
+            mStartServiceIntent.putExtra(MUSICS_CURRENT, mPosition);
+
+            startService(mStartServiceIntent);
+
+            mBindServiceIntent = new Intent(MainActivity.this, MusicPlayerService.class);
+            bindService(mBindServiceIntent, mConnection, Context.BIND_AUTO_CREATE);
         }
 
     }
@@ -128,20 +145,15 @@ public class MainActivity extends AppCompatActivity implements
 
     @Override
     public void onLoaderReset(Loader<List<Music>> loader) {
-        mMusicRecyclerAdapter.clear();
+        musicsList.clear();
     }
 
 
-    // TO DO
-    // Need to update kichuri code
     @Override
-    public void onItemClick(AdapterView<?> adapterView, View view, int position, long l) {
-
+    public void onItemClick(View itemView, int position) {
         mPosition = position;
 
-        view.setSelected(true);
-
-        ImageView play = (ImageView) view.findViewById(R.id.image_view_music_play);
+        ImageView play = (ImageView) itemView.findViewById(R.id.image_view_music_play);
 
         if(mOldImageView != null && mOldImageView != play){
             if((int)mOldImageView.getTag() == R.drawable.pause_circle){
@@ -156,37 +168,91 @@ public class MainActivity extends AppCompatActivity implements
             play.setImageResource(R.drawable.pause_circle);
             play.setTag(R.drawable.pause_circle);
 
-            mPlaying = true;
+            if(mBound){
+                mPlaying = true;
+                mMusicPlayerService.pauseMusic();
+                mMusicPlayerService.playMusicAtPosition(mPosition);
+            }else{
+                mBindServiceIntent = new Intent(MainActivity.this, MusicPlayerService.class);
+                bindService(mBindServiceIntent, mConnection, Context.BIND_AUTO_CREATE);
 
-            intent = new Intent(MainActivity.this, MusicPlayerService.class);
-            intent.putExtra(MUSICS_DATA, (Serializable) musicsList);
-            intent.putExtra(MUSICS_CURRENT, position);
-
-            startService(intent);
+                if(mBound){
+                    mMusicPlayerService.playMusicAtPosition(mPosition);
+                    mPlaying = true;
+                }
+            }
 
         }else{
 
             play.setImageResource(R.drawable.play);
             play.setTag(R.drawable.play);
 
-            if(stopService(intent)){
+            if(mBound){
                 mPlaying = false;
-                mPosition = -1;
-                Toast.makeText(getApplicationContext(), "Music Stopped", Toast.LENGTH_SHORT).show();
-            }else {
-                Toast.makeText(getApplicationContext(), "Music Not Stopped", Toast.LENGTH_SHORT).show();
+                mMusicPlayerService.pauseMusic();
             }
-
-
         }
 
         mOldImageView = play;
 
+        if(mPosition > -1 && !musicsList.isEmpty())
+            updateFragmentWithMusicState(musicsList.get(mPosition), mPlaying);
+    }
+
+    public void initializeFragmentOnDataLoad(){
+        FragmentManager fm = getFragmentManager();
+        MusicFragment musicFragment = (MusicFragment) fm.findFragmentById(
+                R.id.fragment_main_activity_music);
+        MusicFragment newFragment = new MusicFragment();
+        FragmentTransaction ft = fm.beginTransaction();
+
+        if(musicFragment != null){
+            musicFragment.updateMusic(musicsList.get(fragmentPosition), false);
+        }else{
+            ft.add(R.id.fragment_main_activity_music, newFragment);
+            ft.addToBackStack(null);
+            ft.commit();
+        }
+    }
+
+    public void updateFragmentWithMusicState(Music music, boolean isPlaying){
+        FragmentManager fm = getFragmentManager();
+        MusicFragment musicFragment = (MusicFragment) fm.findFragmentById(
+                R.id.fragment_main_activity_music);
+
+        if(musicFragment != null){
+            musicFragment.updateMusic(music, isPlaying);
+        }
+    }
+
+    @Override
+    public void launchMusicDetailsActivity() {
         Intent musicIntent = new Intent(MainActivity.this, MusicActivity.class);
-        musicIntent.putExtra(MUSIC_POSITION, position);
+        musicIntent.putExtra(MUSIC_POSITION, mPosition);
         musicIntent.putExtra(MUSICS_DATA, (Serializable) musicsList);
         startActivity(musicIntent);
     }
 
+    @Override
+    protected void onDestroy() {
+        stopService(mStartServiceIntent);
+    }
 
+    @Override
+    public void notifyOnChangeMusic(Music newMusic) {
+        mPosition += 1;
+        updateFragmentWithMusicState(newMusic, mPlaying);
+    }
+
+    @Override
+    public void notifyOnPauseMusic() {
+        mPlaying = false;
+        updateFragmentWithMusicState(musicsList.get(mPosition), mPlaying);
+    }
+
+    @Override
+    public void notifyOnPlayMusic() {
+        mPlaying = true;
+        updateFragmentWithMusicState(musicsList.get(mPosition), mPlaying);
+    }
 }

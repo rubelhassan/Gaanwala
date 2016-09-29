@@ -1,6 +1,7 @@
 package com.example.rubel.gaanwala;
 
 import android.content.Context;
+import android.graphics.Color;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -22,6 +23,16 @@ public class MusicRecyclerAdapter extends RecyclerView.Adapter<MusicRecyclerAdap
     private Context mContext;
     LayoutInflater mLayoutInflater;
 
+    private OnItemClickListener listener;
+
+    public interface OnItemClickListener{
+        void onItemClick(View itemView, int position);
+    }
+
+    public void setOnItemClickListener(OnItemClickListener listener){
+        this.listener = listener;
+    }
+
     public MusicRecyclerAdapter(List<Music> mMusicsList, Context mContext) {
         this.mMusicsList = mMusicsList;
         this.mContext = mContext;
@@ -37,6 +48,7 @@ public class MusicRecyclerAdapter extends RecyclerView.Adapter<MusicRecyclerAdap
     @Override
     public void onBindViewHolder(MusicDataHolder musicDataHolder, int position) {
         Music music = mMusicsList.get(position);
+
         musicDataHolder.getImgBanner().setImageResource(R.drawable.music_circle);
         musicDataHolder.getImgPlay().setImageResource(R.drawable.play);
         musicDataHolder.getImgPlay().setTag(R.drawable.play);
@@ -50,32 +62,34 @@ public class MusicRecyclerAdapter extends RecyclerView.Adapter<MusicRecyclerAdap
         return mMusicsList.size();
     }
 
-    public void addAll(List<Music> musics){
-        mMusicsList.clear();
-        mMusicsList.addAll(musics);
-        notifyDataSetChanged();
-    }
 
-    public void clear(){
-        mMusicsList.clear();
-        notifyDataSetChanged();
-    }
-
-    class MusicDataHolder extends RecyclerView.ViewHolder {
+    public class MusicDataHolder extends RecyclerView.ViewHolder {
         ImageView imgBanner;
         ImageView imgPlay;
         TextView tvTitle;
         TextView tvArtist;
         TextView tvLength;
 
-        public MusicDataHolder(View view) {
+        public MusicDataHolder(final View view) {
             super(view);
+
             this.imgBanner = (ImageView) view.findViewById(R.id.image_view_music);
             this.imgPlay = (ImageView) view.findViewById(R.id.image_view_music_play);
             this.tvTitle = (TextView) view.findViewById(R.id.text_view_music_title);
             this.tvArtist = (TextView) view.findViewById(R.id.text_view_music_artist);
             this.tvLength = (TextView) view.findViewById(R.id.text_view_music_length);
+
+            view.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View thisView) {
+                    int position = getAdapterPosition();
+                    if(listener != null && position != RecyclerView.NO_POSITION){
+                        listener.onItemClick(view, position);
+                    }
+                }
+            });
         }
+
 
         public ImageView getImgBanner() {
             return imgBanner;
