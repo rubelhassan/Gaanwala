@@ -1,7 +1,6 @@
 package com.example.rubel.gaanwala;
 
 import android.Manifest;
-import android.app.Activity;
 import android.app.FragmentManager;
 import android.app.FragmentTransaction;
 import android.app.LoaderManager;
@@ -11,25 +10,19 @@ import android.content.Intent;
 import android.content.Loader;
 import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
-import android.os.Build;
 import android.os.IBinder;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
-import android.support.v4.app.NavUtils;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
-import android.util.Log;
-import android.view.MenuItem;
 import android.view.View;
 import android.widget.ImageView;
-import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import java.io.Serializable;
 import java.util.LinkedList;
@@ -50,13 +43,11 @@ public class MainActivity extends AppCompatActivity implements
     private static final String MUSIC_PLAYING = "com.example.rubel.gaanwala.MUSIC_PLAYING";
     private static final int MUSIC_ACTIVITY_REQUEST = 1;
     private static final int MUSIC_PERMISSION_REQUEST_READ_EXTERNAL_STORAGE = 101;
-    private static int how = 0;
-
 
     RecyclerView mRecyclerViewMusic;
 
     List<Music> musicsList;
-
+     
     MusicRecyclerAdapter mMusicRecyclerAdapter;
 
     TextView mEmptyStateTextView;
@@ -324,8 +315,13 @@ public class MainActivity extends AppCompatActivity implements
 
             if(mBound && mFragment != null){
                 View viewItem = mRecyclerViewMusic.getLayoutManager().findViewByPosition(position);
-                ImageView iv = (ImageView) viewItem.findViewById(R.id.image_view_music_play);
-                iv.setImageResource(R.drawable.pause_circle);
+                if(viewItem != null){
+                    ImageView iv = (ImageView) viewItem.findViewById(R.id.image_view_music_play);
+                    iv.setImageResource(R.drawable.pause_circle);
+                }
+
+                if(position > musicsList.size())
+                    position = musicsList.size()-1;
 
                 mRecyclerViewMusic.scrollToPosition(position);
                 updateFragmentWithMusicState(musicsList.get(position), playing);
