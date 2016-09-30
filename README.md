@@ -2,10 +2,10 @@
 
 Features:
 
-  - Play music in background
+  - Playing music in background
   - Managing Audio Focus
   - Auto play playlist with Album art
-  - Loading all musid from the device
+  - Loading all music from the device
 
 
 <p align="center">
