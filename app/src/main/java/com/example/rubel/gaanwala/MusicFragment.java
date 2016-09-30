@@ -50,6 +50,7 @@ public class MusicFragment extends Fragment implements
 
 
     public void updateMusic(Music music, boolean isPlaying){
+
         mPlaying = isPlaying;
 
         ((TextView)mParentView.findViewById(R.id.text_view_fragment_music_title)).setText(

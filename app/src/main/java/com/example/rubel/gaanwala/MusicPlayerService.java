@@ -65,8 +65,6 @@ public class MusicPlayerService extends Service implements
         musics = (List<Music>) intent.getSerializableExtra(MUSICS_DATA);
         currentPos = intent.getIntExtra(MUSICS_CURRENT, 0);
 
-        // playOnwards();
-
         return START_STICKY;
     }
 
@@ -131,7 +129,6 @@ public class MusicPlayerService extends Service implements
     @Override
     public void onCompletion(MediaPlayer player) {
         player.reset();
-        Toast.makeText(getApplicationContext(), "Audio Completed", Toast.LENGTH_LONG).show();
         currentPos += 1;
         playOnwards();
     }
@@ -147,7 +144,6 @@ public class MusicPlayerService extends Service implements
     public void playMusic(){
         if(getAudioFoucus())
             mediaPlayer.start();
-        Toast.makeText(getApplicationContext(), "Audio Played", Toast.LENGTH_SHORT).show();
     }
 
     public void pauseMusic(){
@@ -155,8 +151,6 @@ public class MusicPlayerService extends Service implements
             mediaPlayer.pause();
             mAudioManager.abandonAudioFocus(this);
         }
-
-        Toast.makeText(getApplicationContext(), "Audio Paused", Toast.LENGTH_SHORT).show();
     }
 
     public Music playNext() throws IOException {
@@ -191,7 +185,7 @@ public class MusicPlayerService extends Service implements
     }
 
     public int getCurrentPosition(){
-        if(mediaPlayer.isPlaying())
+        if(mediaPlayer != null && mediaPlayer.isPlaying())
             return mediaPlayer.getCurrentPosition();
 
         return 0;
@@ -234,7 +228,6 @@ public class MusicPlayerService extends Service implements
 
     @Override
     public void onAudioFocusChange(int focusChange) {
-        Toast.makeText(getApplicationContext(), "Another Audio focus change", Toast.LENGTH_LONG).show();
 
         switch (focusChange){
 
@@ -251,8 +244,8 @@ public class MusicPlayerService extends Service implements
             }
 
             case AudioManager.AUDIOFOCUS_LOSS:{
-                Toast.makeText(getApplicationContext(), "Another Audio in focus", Toast.LENGTH_LONG).show();
-                if(mediaPlayer.isPlaying()){
+
+                if(mediaPlayer != null && mediaPlayer.isPlaying()){
                     mediaPlayer.pause();
                     mLength = mediaPlayer.getCurrentPosition();
                     notifyAllMusicChangeObserversOnPause();
@@ -262,13 +255,13 @@ public class MusicPlayerService extends Service implements
             }
 
             case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT:{
-                // temporary silence audio stream
+                // temporary pause audio stream
                 if(mediaPlayer.isPlaying()){
                     mediaPlayer.pause();
                     mLength = mediaPlayer.getCurrentPosition();
                     notifyAllMusicChangeObserversOnPause();
                 }
-                Toast.makeText(getApplicationContext(), "Transient Audio in focus", Toast.LENGTH_LONG).show();
+
                 break;
             }
 
@@ -293,5 +286,9 @@ public class MusicPlayerService extends Service implements
         if(mediaPlayer != null)
             mediaPlayer.reset();
         playOnwards();
+    }
+
+    public int getMusicPosition(){
+        return currentPos;
     }
 }

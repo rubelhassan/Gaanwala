@@ -1,5 +1,6 @@
 package com.example.rubel.gaanwala;
 
+import android.app.Activity;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -10,9 +11,12 @@ import android.media.MediaMetadataRetriever;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
+import android.support.v4.app.NavUtils;
 import android.support.v4.content.res.ResourcesCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.ImageButton;
 import android.widget.ImageView;
@@ -31,6 +35,8 @@ public class MusicActivity extends AppCompatActivity implements
 
     private static final String MUSIC_POSITION = "com.example.rubel.gaanwala.POSITION";
     private static final String MUSICS_DATA = "com.example.rubel.gaanwala.MUSICS";
+    private static final String MUSIC_DURATION = "com.example.rubel.gaanwala.DURATION";
+    private static final String MUSIC_PLAYING = "com.example.rubel.gaanwala.MUSIC_PLAYING";
 
     // Related to bound service
     MusicPlayerService musicPlayerService;
@@ -48,6 +54,8 @@ public class MusicActivity extends AppCompatActivity implements
     Music mMusic;
 
     Toolbar mToolbar;
+
+    int mPosition = -1;
 
 
     Handler mMusicHandler = new Handler();
@@ -97,10 +105,8 @@ public class MusicActivity extends AppCompatActivity implements
 
         mMusic = null;
 
-        int position = -1;
-
         if(intent != null){
-            position = getIntent().getIntExtra(MUSIC_POSITION, -1);
+            mPosition = getIntent().getIntExtra(MUSIC_POSITION, -1);
             musics = (List<Music>) getIntent().getSerializableExtra(MUSICS_DATA);
         }
 
@@ -115,8 +121,8 @@ public class MusicActivity extends AppCompatActivity implements
 
 
 
-        if(position > -1 && !musics.isEmpty()) {
-            mMusic = musics.get(position);
+        if(mPosition > -1 && !musics.isEmpty()) {
+            mMusic = musics.get(mPosition);
 
             intent = new Intent(MusicActivity.this, MusicPlayerService.class);
             bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
@@ -146,6 +152,8 @@ public class MusicActivity extends AppCompatActivity implements
                     }
                 }
 
+                setSharedData();
+
             }
         });
 
@@ -162,6 +170,8 @@ public class MusicActivity extends AppCompatActivity implements
                         Toast.makeText(getApplicationContext(), "Something went wrong", Toast.LENGTH_SHORT).show();
                     }
                 }
+
+                setSharedData();
             }
         });
 
@@ -178,6 +188,8 @@ public class MusicActivity extends AppCompatActivity implements
                         Toast.makeText(getApplicationContext(), "Something went wrong", Toast.LENGTH_SHORT).show();
                     }
                 }
+
+                setSharedData();
             }
         });
 
@@ -201,6 +213,8 @@ public class MusicActivity extends AppCompatActivity implements
             }
         });
 
+        setSharedData();
+
     }
 
     private void initializeSeekbarWithValues(){
@@ -221,6 +235,8 @@ public class MusicActivity extends AppCompatActivity implements
             initializeSeekbarWithValues();
 
             setAudioMetaImage();
+
+            setSharedData();
         }
     }
 
@@ -252,20 +268,46 @@ public class MusicActivity extends AppCompatActivity implements
 
     @Override
     public void notifyOnChangeMusic(Music newMusic) {
+
         if(mBound){
             initializeCurrentMusic(newMusic);
+            mPosition = musicPlayerService.getMusicPosition();
         }
+
+        setSharedData();
     }
 
     @Override
     public void notifyOnPauseMusic() {
         mPlaying = false;
         mBtnPlay.setImageDrawable(ResourcesCompat.getDrawable(getResources(), R.drawable.play_circle_outline, null));
+        setSharedData();
     }
 
     @Override
     public void notifyOnPlayMusic() {
         mPlaying = true;
         mBtnPlay.setImageDrawable(ResourcesCompat.getDrawable(getResources(), R.drawable.pause_circle_outline, null));
+        setSharedData();
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+
+        int id = item.getItemId();
+        if (item != null && id == android.R.id.home){
+            setSharedData();
+            NavUtils.navigateUpFromSameTask(this);
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
+    public void setSharedData(){
+        ShareData shareData = ShareData.getInstance();
+        shareData.setReturning(true);
+        shareData.setPlaying(mPlaying);
+        if(mBound)
+            shareData.setPosition(musicPlayerService.getMusicPosition());
     }
 }

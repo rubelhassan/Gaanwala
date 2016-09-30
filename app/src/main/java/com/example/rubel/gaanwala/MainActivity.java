@@ -1,5 +1,7 @@
 package com.example.rubel.gaanwala;
 
+import android.Manifest;
+import android.app.Activity;
 import android.app.FragmentManager;
 import android.app.FragmentTransaction;
 import android.app.LoaderManager;
@@ -8,21 +10,32 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.Loader;
 import android.content.ServiceConnection;
+import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.IBinder;
+import android.support.annotation.NonNull;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.app.NavUtils;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.io.Serializable;
 import java.util.LinkedList;
 import java.util.List;
+
+import static android.content.pm.PackageManager.PERMISSION_GRANTED;
 
 
 public class MainActivity extends AppCompatActivity implements
@@ -33,8 +46,12 @@ public class MainActivity extends AppCompatActivity implements
     private static final String MUSICS_DATA = "com.example.rubel.gaanwala.MUSICS";
     private static final String MUSICS_CURRENT = "com.example.rubel.gaanwala.CURRENT_MUSIC";
     private static final String MUSIC_POSITION = "com.example.rubel.gaanwala.POSITION";
+    private static final String MUSIC_DURATION = "com.example.rubel.gaanwala.DURATION";
+    private static final String MUSIC_PLAYING = "com.example.rubel.gaanwala.MUSIC_PLAYING";
+    private static final int MUSIC_ACTIVITY_REQUEST = 1;
+    private static final int MUSIC_PERMISSION_REQUEST_READ_EXTERNAL_STORAGE = 101;
+    private static int how = 0;
 
-    ListView mListViewMusic;
 
     RecyclerView mRecyclerViewMusic;
 
@@ -55,6 +72,7 @@ public class MainActivity extends AppCompatActivity implements
     boolean mPlaying = false;
     int mPosition = -1;
     int fragmentPosition = 0;
+    MusicFragment mFragment = null;
 
     // Related to bound service
     MusicPlayerService mMusicPlayerService;
@@ -74,7 +92,7 @@ public class MainActivity extends AppCompatActivity implements
         }
     };
 
-    
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -86,10 +104,22 @@ public class MainActivity extends AppCompatActivity implements
 
         mProgressLoading = (ProgressBar) findViewById(R.id.progressbar_loading_music);
 
-        // TO DO
-        // Add runtime permission for api >= 23 com.android.providers.media.MediaProvider
-        LoaderManager loaderManager = getLoaderManager();
-        loaderManager.initLoader(MUSIC_LOADER_ID, null, this);
+        if((ContextCompat.checkSelfPermission(MainActivity.this,
+                Manifest.permission.READ_EXTERNAL_STORAGE)
+                != PERMISSION_GRANTED)){
+            if(ActivityCompat.shouldShowRequestPermissionRationale(MainActivity.this,
+                    Manifest.permission.READ_EXTERNAL_STORAGE)){
+
+            }else{
+                ActivityCompat.requestPermissions(MainActivity.this,
+                        new String[]{Manifest.permission.READ_EXTERNAL_STORAGE},
+                        MUSIC_PERMISSION_REQUEST_READ_EXTERNAL_STORAGE);
+            }
+        }else{
+            LoaderManager loaderManager = getLoaderManager();
+            loaderManager.initLoader(MUSIC_LOADER_ID, null, this);
+        }
+
     }
 
     private void initializeListViewMusic() {
@@ -123,7 +153,7 @@ public class MainActivity extends AppCompatActivity implements
         mEmptyStateTextView.setText("No Music found.");
 
         // mMusicRecyclerAdapter.clear();
-        if(musicsList != null && !musicsList.isEmpty()){
+        if(musicsList != null && !musicsList.isEmpty() && !mBound){
             mPosition = 0;
             //mMusicRecyclerAdapter.addAll(musics);
             mEmptyStateTextView.setVisibility(View.GONE);
@@ -138,6 +168,7 @@ public class MainActivity extends AppCompatActivity implements
 
             mBindServiceIntent = new Intent(MainActivity.this, MusicPlayerService.class);
             bindService(mBindServiceIntent, mConnection, Context.BIND_AUTO_CREATE);
+
         }
 
     }
@@ -199,6 +230,7 @@ public class MainActivity extends AppCompatActivity implements
             updateFragmentWithMusicState(musicsList.get(mPosition), mPlaying);
     }
 
+
     public void initializeFragmentOnDataLoad(){
         FragmentManager fm = getFragmentManager();
         MusicFragment musicFragment = (MusicFragment) fm.findFragmentById(
@@ -207,8 +239,10 @@ public class MainActivity extends AppCompatActivity implements
         FragmentTransaction ft = fm.beginTransaction();
 
         if(musicFragment != null){
+            mFragment = musicFragment;
             musicFragment.updateMusic(musicsList.get(fragmentPosition), false);
         }else{
+            mFragment = newFragment;
             ft.add(R.id.fragment_main_activity_music, newFragment);
             ft.addToBackStack(null);
             ft.commit();
@@ -221,12 +255,17 @@ public class MainActivity extends AppCompatActivity implements
                 R.id.fragment_main_activity_music);
 
         if(musicFragment != null){
+            mFragment = musicFragment;
             musicFragment.updateMusic(music, isPlaying);
         }
     }
 
     @Override
     public void launchMusicDetailsActivity() {
+        View viewItem = mRecyclerViewMusic.getLayoutManager().findViewByPosition(mPosition);
+        ImageView iv = (ImageView) viewItem.findViewById(R.id.image_view_music_play);
+        iv.setImageResource(R.drawable.play);
+
         Intent musicIntent = new Intent(MainActivity.this, MusicActivity.class);
         musicIntent.putExtra(MUSIC_POSITION, mPosition);
         musicIntent.putExtra(MUSICS_DATA, (Serializable) musicsList);
@@ -235,6 +274,8 @@ public class MainActivity extends AppCompatActivity implements
 
     @Override
     protected void onDestroy() {
+        super.onDestroy();
+        unbindService(mConnection);
         stopService(mStartServiceIntent);
     }
 
@@ -254,5 +295,50 @@ public class MainActivity extends AppCompatActivity implements
     public void notifyOnPlayMusic() {
         mPlaying = true;
         updateFragmentWithMusicState(musicsList.get(mPosition), mPlaying);
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        switch (requestCode){
+            case MUSIC_PERMISSION_REQUEST_READ_EXTERNAL_STORAGE:{
+                if((grantResults.length > 0) && grantResults[0] == PackageManager.PERMISSION_GRANTED){
+                    LoaderManager loaderManager = getLoaderManager();
+                    loaderManager.initLoader(MUSIC_LOADER_ID, null, this);
+                }else{
+                    mEmptyStateTextView.setText("Restart and Check Permission");
+                }
+                return;
+            }
+        }
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+
+        ShareData shareData = ShareData.getInstance();
+        if(shareData.isReturning()){
+            shareData.setReturning(false);
+            int position = shareData.getPosition();
+            boolean playing = shareData.isPlaying();
+
+            if(mBound && mFragment != null){
+                View viewItem = mRecyclerViewMusic.getLayoutManager().findViewByPosition(position);
+                ImageView iv = (ImageView) viewItem.findViewById(R.id.image_view_music_play);
+                iv.setImageResource(R.drawable.pause_circle);
+
+                mRecyclerViewMusic.scrollToPosition(position);
+                updateFragmentWithMusicState(musicsList.get(position), playing);
+                mPosition = position;
+            }else{
+                mBindServiceIntent = new Intent(MainActivity.this, MusicPlayerService.class);
+                bindService(mBindServiceIntent, mConnection, Context.BIND_AUTO_CREATE);
+
+                if(mBound){
+                    mRecyclerViewMusic.scrollToPosition(position);
+                    updateFragmentWithMusicState(musicsList.get(position), playing);
+                }
+            }
+        }
     }
 }
