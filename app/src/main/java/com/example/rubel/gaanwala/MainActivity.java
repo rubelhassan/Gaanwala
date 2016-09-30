@@ -47,7 +47,7 @@ public class MainActivity extends AppCompatActivity implements
     RecyclerView mRecyclerViewMusic;
 
     List<Music> musicsList;
-     
+
     MusicRecyclerAdapter mMusicRecyclerAdapter;
 
     TextView mEmptyStateTextView;
